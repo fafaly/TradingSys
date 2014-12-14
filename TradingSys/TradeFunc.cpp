@@ -501,8 +501,8 @@ int EntrustQry(char *s_code,char *amt,char *tpx,char *status)
 	}
 }
 
-/**/
-int PricetQry(char *s_code, char *price1, char *bs)
+/*hang qing cha xun*/
+int PricetQry(char *s_code, char *price1, int bs)
 {
 	char szMsg[512];
 	SetNecessaryParam();
@@ -517,9 +517,11 @@ int PricetQry(char *s_code, char *price1, char *bs)
 	}
 	else
 	{
-		CITICs_HsHlp_GetValue(HlpHandle, "buy_price1", amt);
-		CITICs_HsHlp_GetValue(HlpHandle, "business_price", tpx);
-		CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
+		if (bs == 1)
+			CITICs_HsHlp_GetValue(HlpHandle, "buy_price1", price1);
+		else
+			CITICs_HsHlp_GetValue(HlpHandle, "sell_price1", price1);
+		//CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
 		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
 		return iRet;
 	}
