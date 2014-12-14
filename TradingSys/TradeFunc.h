@@ -13,23 +13,23 @@
 #pragma comment(lib, "CITICs_HsT2Hlp.lib")
 #pragma comment(lib,"wsock32.lib")
 
-void ShowAnsData(HSHLPHANDLE HlpHandle);
-void ShowErrMsg(HSHLPHANDLE HlpHandle, int iFunc);
+void ShowAnsData();
+void ShowErrMsg(int iFunc);
 //HSHLPHANDLE Run();
 int Login(HSHLPHANDLE);
-void SetNecessaryParam(HSHLPHANDLE HlpHandle);
+void SetNecessaryParam();
 bool GetLocalIP(char* ip);
 bool GetFirstMac(char * mac);
 void put_file_str(const char* fname, char* format, ...);
-int GetShare(HSHLPHANDLE HlpHandle);
-int GetTrade(HSHLPHANDLE HlpHandle);
-int NormalEntrust(HSHLPHANDLE HlpHandle, char *s_code, char *ammount, char *tpx);
-int CancelEntrust(HSHLPHANDLE HlpHandle, char *eno);
-int EntrustBuyOrSell(HSHLPHANDLE HlpHandle, char *s_code, char *ammount, char *tpx, char *market, char *en_count, char *entrust_bs);
-int CancelEntrustQry(HSHLPHANDLE HlpHandle);
-int EntrustQry(HSHLPHANDLE HlpHandle);
-int BatchEntrustQry(HSHLPHANDLE HlpHandle);
-HSHLPHANDLE Run();
+int GetShare();
+int GetTrade();
+int NormalEntrust( char *s_code, char *ammount, char *tpx);
+int CancelEntrust( char *eno);
+int EntrustBuyOrSell( char *s_code, char *ammount, char *tpx, char *market, char *en_count, char *entrust_bs);
+int CancelEntrustQry();
+int EntrustQry();
+int BatchEntrustQry();
+HSHLPHANDLE Connect();
 
 
 //const char fund_account[32] = "600511005";//²âÊÔ×Ê½ðÕËºÅ

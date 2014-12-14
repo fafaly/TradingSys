@@ -3,6 +3,7 @@
 #include "GlobalFunc.h"
 #include "Company.h"
 #include "CiticsCompany.h"
+#include "TradeFunc.h"
 #include <Windows.h>
 #include <time.h>
 #include <thread>
@@ -145,6 +146,7 @@ int Run()
 {
 	try
 	{
+		Connect();
 		Company *cp = new CiticsCompany();
 		char *fdate = GetDate();
 		GetCash();

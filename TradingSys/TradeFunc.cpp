@@ -16,14 +16,16 @@ char IP[16];
 char MAC[16];
 char HD[16];
 
-HSHLPHANDLE Run()
+HSHLPHANDLE HlpHandle = NULL;
+
+HSHLPHANDLE Connect()
 {
 	int iRet;
 	char szMsg[512];
 
 	HSHLPCFGHANDLE hConfig1;
 	//	HSHLPCFGHANDLE hConfig2;
-	HSHLPHANDLE HlpHandle = NULL;
+
 	if (!GetLocalIP(IP))
 	{
 		printf("获取本机IPC失败，请手动填入内网IP至对应字符串。\n");
@@ -71,12 +73,12 @@ HSHLPHANDLE Run()
 		printf("Connect HSAR OK......\n");
 	}
 
-	//账户登录.
-	Login(HlpHandle);
-	//证券持仓查询
-	GetShare(HlpHandle);
-	//证券交易查询
-	GetTrade(HlpHandle);
+	////账户登录.
+	//Login();
+	////证券持仓查询
+	//GetShare();
+	////证券交易查询
+	//GetTrade();
 	//NormalEntrust(HlpHandle,"600008","100", "1");
 	//CancelEntrust(HlpHandle,"350");
 	//EntrustBuyOrSell(HlpHandle, "600009", "100", "20", "1", "2","1");
@@ -87,17 +89,17 @@ HSHLPHANDLE Run()
 	return HlpHandle;
 }
 
-int Login(HSHLPHANDLE HlpHandle)
+int Login()
 {
 	printf("\n\n---===客户登录Login===---");
 	//备注：密码多次送错会冻结账户，十分钟后再试即可。
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 	CITICs_HsHlp_SetValue(HlpHandle, "input_content", "1");
 	CITICs_HsHlp_SetValue(HlpHandle, "account_content", fund_account);
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 331100, NULL);
 	if (iRet)
 	{
-		ShowErrMsg(HlpHandle, 331100);
+		ShowErrMsg( 331100);
 		_getch();
 		exit(0);
 	}
@@ -109,10 +111,10 @@ int Login(HSHLPHANDLE HlpHandle)
 	CITICs_HsHlp_GetValue(HlpHandle, "asset_prop", asset_prop);
 	CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
 
-	ShowAnsData(HlpHandle);
+	ShowAnsData();
 }
 
-void ShowErrMsg(HSHLPHANDLE HlpHandle, int iFunc)
+void ShowErrMsg( int iFunc)
 {
 	int nErr = 0;
 	char szMsg[512] = { 0 };
@@ -122,7 +124,7 @@ void ShowErrMsg(HSHLPHANDLE HlpHandle, int iFunc)
 }
 
 //打印返回值。如果遇到和文档不一致的情况，以测试结果为准。
-void ShowAnsData(HSHLPHANDLE HlpHandle)
+void ShowAnsData()
 {
 	int iRow, iCol;
 	char szKey[64], szValue[512];
@@ -146,7 +148,7 @@ void ShowAnsData(HSHLPHANDLE HlpHandle)
 }
 
 //这个函数设置了除登陆外所有报文都需要送的参数。
-void SetNecessaryParam(HSHLPHANDLE HlpHandle)
+void SetNecessaryParam()
 {
 	CITICs_HsHlp_BeginParam(HlpHandle);
 	CITICs_HsHlp_SetValue(HlpHandle, "client_id", client_id);
@@ -241,7 +243,7 @@ bool GetFirstMac(char * mac)
 }
 
 /*持仓量查询或成交流水查询*/
-int GetShare(HSHLPHANDLE HlpHandle)
+int GetShare()
 {
 	struct tm *newtime;
 	char tmpbuf[128];
@@ -253,7 +255,7 @@ int GetShare(HSHLPHANDLE HlpHandle)
 	sprintf(ntmpbuf, "%s%s", OUT_TP_DIR, tmpbuf);
 	FILE *fp = fopen(ntmpbuf, "w");
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 	CITICs_HsHlp_SetValue(HlpHandle, "query_mode", "1");
 	CITICs_HsHlp_SetValue(HlpHandle, "request_num", "1000");
 	CITICs_HsHlp_SetValue(HlpHandle, "query_type", "1");
@@ -280,7 +282,7 @@ int GetShare(HSHLPHANDLE HlpHandle)
 	}
 }
 
-int GetTrade(HSHLPHANDLE HlpHandle)
+int GetTrade()
 {
 	char reqnum[] = "500";
 	struct tm *newtime;
@@ -301,7 +303,7 @@ int GetTrade(HSHLPHANDLE HlpHandle)
 	int totalRowNum = 0;
 	while (iRow == atoi(reqnum))
 	{
-		SetNecessaryParam(HlpHandle);
+		SetNecessaryParam();
 		CITICs_HsHlp_SetValue(HlpHandle, "query_mode", "1");
 		//CITICs_HsHlp_SetValue(HlpHandle, "request_num", reqnum);
 		CITICs_HsHlp_SetValue(HlpHandle, "query_type", "1");
@@ -347,33 +349,56 @@ int GetTrade(HSHLPHANDLE HlpHandle)
 }
 
 /*普通委托*/
-int NormalEntrust(HSHLPHANDLE HlpHandle, char *s_code, char *ammount, char *tpx)
+int NormalEntrust( char *s_code, char *ammount, char *tpx,char *bs)
 {
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 	CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_amount", ammount);
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_price", tpx);
-	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", "1");//1买 2卖
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", bs);//1买 2卖
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_prop", "0");//委托类型：买卖
 	CITICs_HsHlp_SetValue(HlpHandle, "batch_no", "0");//0表示单笔订单
 
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333002, NULL);
-	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("NormalEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		return iRet;
 	}
-	ShowAnsData(HlpHandle);
+	ShowAnsData();
+}
+
+
+/*普通委托*/
+int MarketPriceEntrust(char *s_code, char *ammount, char *bs)
+{
+	char szMsg[512];
+	SetNecessaryParam();
+	CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_amount", ammount);
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", bs);//1买 2卖
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_prop", "0");//委托类型：买卖
+	CITICs_HsHlp_SetValue(HlpHandle, "batch_no", "0");//0表示单笔订单
+
+	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333002, NULL);
+	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+	if (iRet)
+	{
+		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
+		printf("NormalEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		return iRet;
+	}
+	ShowAnsData();
 }
 
 /*委托撤销*/
-int CancelEntrust(HSHLPHANDLE HlpHandle, char *eno)
+int CancelEntrust( char *eno)
 {
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_no", eno);
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333017, NULL);
 	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
@@ -383,7 +408,10 @@ int CancelEntrust(HSHLPHANDLE HlpHandle, char *eno)
 		printf("CancelEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		return iRet;
 	}
-	ShowAnsData(HlpHandle);
+	else
+	{
+		return iRet;
+	}
 }
 
 /*
@@ -406,10 +434,10 @@ int CancelEntrust(HSHLPHANDLE HlpHandle, char *eno)
 "F4"	金融交易所(期货)
 *		en_count 委托数
 */
-int EntrustBuyOrSell(HSHLPHANDLE HlpHandle, char *s_code, char *ammount, char *tpx, char *market, char *en_count, char *entrust_bs)
+int EntrustBuyOrSell(char *s_code, char *ammount, char *tpx, char *market, char *en_count, char *entrust_bs)
 {
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", entrust_bs);//1买 2卖
 	CITICs_HsHlp_SetValue(HlpHandle, "exchange_type", market);//交易类别，必须输入确定的市场，不支持0或空格。
@@ -430,14 +458,14 @@ int EntrustBuyOrSell(HSHLPHANDLE HlpHandle, char *s_code, char *ammount, char *t
 		printf("Request batch buy or sell failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		return iRet;
 	}
-	ShowAnsData(HlpHandle);
+	ShowAnsData();
 }
 
 /*可撤单委托查询*/
-int CancelEntrustQry(HSHLPHANDLE HlpHandle)
+int CancelEntrustQry()
 {
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333100, NULL);
 	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
@@ -446,30 +474,62 @@ int CancelEntrustQry(HSHLPHANDLE HlpHandle)
 		printf("request shares failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		return iRet;
 	}
-	ShowAnsData(HlpHandle);
+	ShowAnsData();
 }
 
 /*委托查询*/
-int EntrustQry(HSHLPHANDLE HlpHandle)
+int EntrustQry(char *s_code,char *amt,char *tpx,char *status)
 {
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
+	CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333101, NULL);
-	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("EntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		return iRet;
 	}
-	ShowAnsData(HlpHandle);
+	else
+	{
+		CITICs_HsHlp_GetValue(HlpHandle, "business_amount", amt);
+		CITICs_HsHlp_GetValue(HlpHandle, "business_price", tpx);
+		CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
+		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
+		return iRet;
+	}
+}
+
+/**/
+int PricetQry(char *s_code, char *price1, char *bs)
+{
+	char szMsg[512];
+	SetNecessaryParam();
+	CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
+	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 400, NULL);
+	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+	if (iRet)
+	{
+		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
+		printf("EntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		return iRet;
+	}
+	else
+	{
+		CITICs_HsHlp_GetValue(HlpHandle, "buy_price1", amt);
+		CITICs_HsHlp_GetValue(HlpHandle, "business_price", tpx);
+		CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
+		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
+		return iRet;
+	}
 }
 
 /*批量委托查询*/
-int BatchEntrustQry(HSHLPHANDLE HlpHandle)
+int BatchEntrustQry()
 {
 	char szMsg[512];
-	SetNecessaryParam(HlpHandle);
+	SetNecessaryParam();
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333107, NULL);
 	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
@@ -478,7 +538,7 @@ int BatchEntrustQry(HSHLPHANDLE HlpHandle)
 		printf("BatchEntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		return iRet;
 	}
-	ShowAnsData(HlpHandle);
+	ShowAnsData();
 }
 
 
