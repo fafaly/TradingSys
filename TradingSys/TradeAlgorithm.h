@@ -1,4 +1,5 @@
 #pragma once
+#include "Company.h"
 
 struct Order
 {
@@ -19,4 +20,4 @@ int ReadOrder();
 int Run();
 
 //×ÓÏß³Ì
-void SubThread(char* tk,int shr,char* bs,char* stime,char* etime);
+void SubThread(Order *od, Company *cp);
