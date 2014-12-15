@@ -18,7 +18,7 @@ float CiticsCompany::GetTax(char*tk,int shr, float tpx, int bs)
 		transfer = shr * 6 / 10000;
 	if (bs == 1)
 		return happencash*(1 + comrate) + transfer;
-	else if (bs == -1)
+	else if (bs == 2)
 		return happencash*(1 + comrate + stamprate) + transfer;
 	else
 		return 0;

@@ -16,19 +16,39 @@
 void ShowAnsData();
 void ShowErrMsg(int iFunc);
 //HSHLPHANDLE Run();
+//用户登录
 int Login(HSHLPHANDLE);
+//获取必要参数
 void SetNecessaryParam();
 bool GetLocalIP(char* ip);
 bool GetFirstMac(char * mac);
 void put_file_str(const char* fname, char* format, ...);
+//获取持仓
 int GetShare();
+//获取当日交易明细
 int GetTrade();
-int NormalEntrust( char *s_code, char *ammount, char *tpx);
+//普通委托
+int NormalEntrust(char *s_code, char *ammount, char *tpx, char *bs);
+//撤销委托
 int CancelEntrust( char *eno);
+//批量委托
 int EntrustBuyOrSell( char *s_code, char *ammount, char *tpx, char *market, char *en_count, char *entrust_bs);
+//可撤销委托查询
 int CancelEntrustQry();
-int EntrustQry();
+//批量委托查询
 int BatchEntrustQry();
+//查询行情
+int PriceQry(char *s_code, char *price1, int bs);
+//委托查询
+//status:0未报; 1待报; 2已报 ;6已撤; 7部分成交; 8全部成交;
+int EntrustQry(char *s_code, char *amt, char *tpx, char *status);
+//市价交易
+int MarketPriceEntrust(char *s_code, char *ammount, char *bs);
+//账户相关信息查询
+int AccQry(char *);
+//前台费用计算
+float EntrustFare(char *tk,int amt,float tpx,char* bs);
+//连接服务器
 HSHLPHANDLE Connect();
 
 

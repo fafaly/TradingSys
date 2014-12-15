@@ -13,9 +13,10 @@
 using namespace std;
 using namespace GlobalFunc;
 
-#define INTERVAL_TIME 60000
+#define INTERVAL_TIME 30000
 
 mutex cashmtx;//锁住现金
+
 
 float cash = 0;
 
@@ -30,14 +31,26 @@ char *GetDate()
 	return fdate;
 }
 
-int BuyTk(char *tk, int brokeshr, Company *cp)
+//bs1买 2卖
+int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 {
 	int ret = 0;
+	char strbs[2];
+	if (bs == 1)
+		strcpy(strbs,"1");
+	else
+		strcpy(strbs, "2");
 	////////获取买一价API
-	int tpx = 0;
+	char str_price1[20];
+	PriceQry(tk, str_price1, bs);
+
+	float tpx = atof(str_price1);
+	float tradefare = EntrustFare(tk, brokeshr, tpx, "1");
 	cashmtx.lock();
+	GetCash();
 	float tmp = cash;
-	cash -= brokeshr*tpx - cp->GetTax(tk,brokeshr,tpx,1);//扣去金额和税收
+	//cash -= brokeshr*tpx - cp->GetTax(tk, brokeshr, tpx, bs);
+	cash -= tradefare;
 	if (cash < 0)
 	{
 		cash = tmp;
@@ -45,47 +58,77 @@ int BuyTk(char *tk, int brokeshr, Company *cp)
 	}
 	else
 	{
+		char shrtmp[20];
+		sprintf(shrtmp, "%d\0", brokeshr);
 		if (brokeshr >= 1500)
 		{
-			///市价买入API
+			///市价w委托API
+			char tmpbs[10];
+			if (MarketPriceEntrust(tk, shrtmp, _itoa(bs,tmpbs,10)))
+			{
+				//委托成功
+			}
+			else
+			{
+				cash = tmp;
+			}
 		}
 		else
 		{
-			/////买API
+			/////普通委托API
+			if (NormalEntrust(tk, shrtmp, str_price1, strbs))
+			{
+				//委托成功
+			}
+			else
+			{
+				cash = tmp;
+			}
 		}
 	}
 	cashmtx.unlock();
 	return ret;
 }
 
-int SellTk(char *tk, int brokeshr, Company *cp)
+//检查成交情况.
+int CheckDeal(char *tk)
 {
-	int ret = 1;
-	///////获取卖一价API
-	int tpx = 0;
-	float happencash = brokeshr * tpx;
-	cashmtx.lock();
-	cash -= happencash - cp->GetTax(tk, brokeshr, tpx, -1);//扣去金额和税收
-	if (brokeshr >= 1500)
+	char amt[20];
+	char tpx[10];
+	char status[2];
+	if (EntrustQry(tk, amt, tpx, status) > 0)
 	{
-		///市价卖API
+		if (strcmp(status,"8")==0)
+		{
+			return 0;
+		}
+		else if (strcmp(status, "7") == 0)
+		{
+			return atoi(amt);
+		}
+		else
+		{
+			return -1;
+		}
 	}
-	else
-	{
-		/////市价买API
-	}
-	cash += brokeshr*tpx;
-	cashmtx.unlock();
-	return ret;
 }
 
 //得到现在的现金值
 int GetCash()
 {
+	char strcash[20];
+	int ret = 0;
 	cashmtx.lock();
-	cash = 200000;//获取现金API
+	if (AccQry(strcash))
+	{
+		cash = atof(strcash);
+	}
+	else
+	{
+		ret = -1;
+	}
 	cashmtx.unlock();
-	return 0;
+	return ret;
 }
 
 
@@ -103,9 +146,9 @@ int RunAlgorithm(Order *od, Company *cp)
 		time(&rawtime);
 		tminfo = localtime(&rawtime);
 		int restime = (ehour - tminfo->tm_hour) * 60 - tminfo->tm_min + emin;
-		if (restime != 0 && shr != 0)
+		if (restime != 0 && shr != 0)//如果还有剩余时间和股票没交易
 		{
-			int brokeshr = shr / 100 / restime;
+			int brokeshr = shr / 100 / restime;//尽量平摊在每分钟
 			if (brokeshr == 0)//不能平摊在剩下的每分钟里的情况，直接拆成100股
 			{
 				brokeshr = 100;
@@ -120,17 +163,44 @@ int RunAlgorithm(Order *od, Company *cp)
 				//足够数量去划分
 				brokeshr *= 100;
 			}
-			shr -= brokeshr;
+
 			if (strcmp(od->bs, "B") == 0)
 			{
-				BuyTk(tk,brokeshr,cp);
+				if (BuySellTk(tk, brokeshr, cp, 1) == 1)//没钱买
+				{
+					Sleep(INTERVAL_TIME);
+					continue;
+				}
+				else
+				{
+					shr -= brokeshr;
+				}
 			}
 			else
 			{
-				SellTk(tk,brokeshr,cp);
+				BuySellTk(tk, brokeshr,cp,2);
+				shr -= brokeshr;
 			}
-			printf("tk:%s\trestshr:%d\tbrokeshr:%d\n", tk, shr, brokeshr);
+			//printf("tk:%s\trestshr:%d\tbrokeshr:%d\tcash:cash\n", tk, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
+			int realamt = CheckDeal(tk);
+			if (realamt > 0)//如果部分成交的话
+			{
+				shr += brokeshr - realamt;
+			}
+			else if (realamt < 0)//完全没成交
+			{
+				if (CancelEntrust(tk) > 0)//撤单
+				{
+					shr += brokeshr;//把去掉的加回来
+				}
+				else
+				{
+					//如果撤销失败怎么办？
+				}
+			}
+			Sleep(INTERVAL_TIME);
+			printf("tk:%s\trestshr:%d\tbrokeshr:%d\tcash:cash\n", tk, shr, brokeshr, cash);
 		}
 		else
 		{

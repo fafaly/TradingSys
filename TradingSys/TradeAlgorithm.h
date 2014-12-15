@@ -21,3 +21,6 @@ int Run();
 
 //子线程
 void SubThread(Order *od, Company *cp);
+
+//获取现金.
+int GetCash();
