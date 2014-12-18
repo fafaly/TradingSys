@@ -21,6 +21,8 @@ void InitialAccount(char *fund, char *pwd, char *out_dir)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	InitialAccount("1000000033", "606869", "Z:\\data\\WindDB\\production\\trade\\System\\");
+	//InitialAccount("600511005", "606869", "Z:\\data\\WindDB\\production\\trade\\System\\");
 	Run();
 	return 0;
 }

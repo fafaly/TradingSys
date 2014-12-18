@@ -17,7 +17,7 @@ void ShowAnsData();
 void ShowErrMsg(int iFunc);
 //HSHLPHANDLE Run();
 //用户登录
-int Login(HSHLPHANDLE);
+int Login();
 //获取必要参数
 void SetNecessaryParam();
 bool GetLocalIP(char* ip);

@@ -383,6 +383,7 @@ int GetHistoryTrade(char* sdate,char *edate)
 		{
 			CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 			printf("request shares failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+			apimtx.unlock();
 			return iRet;
 		}
 		iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
@@ -442,9 +443,11 @@ int NormalEntrust( char *s_code, char *ammount, char *tpx,char *bs)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("NormalEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	apimtx.unlock();
+	return iRet;
 }
 
 
@@ -466,10 +469,12 @@ int MarketPriceEntrust(char *s_code, char *ammount, char *bs)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("NormalEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	ShowAnsData();
 	apimtx.unlock();
+	return iRet;
 }
 
 /*委托撤销*/
@@ -485,13 +490,10 @@ int CancelEntrust( char *eno)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("CancelEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
-		return iRet;
-	}
-	else
-	{
-		return iRet;
+		
 	}
 	apimtx.unlock();
+	return iRet;
 }
 
 /*
@@ -537,6 +539,7 @@ int EntrustBuyOrSell(char *s_code, char *ammount, char *tpx, char *market, char 
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("Request batch buy or sell failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	ShowAnsData();
@@ -555,10 +558,12 @@ int CancelEntrustQry()
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("request shares failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	ShowAnsData();
 	apimtx.unlock();
+	return iRet;
 }
 
 /*委托查询*/
@@ -582,9 +587,11 @@ int EntrustQry(char *s_code,char *amt,char *tpx,char *status)
 		CITICs_HsHlp_GetValue(HlpHandle, "business_price", tpx);
 		CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
 		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
+		apimtx.unlock();
 		return iRet;
 	}
 	apimtx.unlock();
+	return iRet;
 }
 
 /*行情查询*/
@@ -600,19 +607,18 @@ int PriceQry(char *s_code, char *price1, int bs)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("EntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
-		return iRet;
 	}
 	else
 	{
 		if (bs == 1)
 			CITICs_HsHlp_GetValue(HlpHandle, "buy_price1", price1);
 		else
-			CITICs_HsHlp_GetValue(HlpHandle, "sell_price1", price1);
+			CITICs_HsHlp_GetValue(HlpHandle, "sale_price1", price1);
 		//CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
 		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
-		return iRet;
 	}
 	apimtx.unlock();
+	return iRet;
 }
 
 //账户相关查询
@@ -621,20 +627,25 @@ int AccQry(char *mycash)
 	char szMsg[512];
 	apimtx.lock();
 	SetNecessaryParam();
+	CITICs_HsHlp_SetValue(HlpHandle, "input_content", "1");
+	CITICs_HsHlp_SetValue(HlpHandle, "content_type", "0");
+	CITICs_HsHlp_SetValue(HlpHandle, "account_content", "5");
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 331151, NULL);
 	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("EntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	else
 	{
 		CITICs_HsHlp_GetValue(HlpHandle, "enable_balance", mycash);
+		apimtx.unlock();
 		return iRet;
 	}
-	apimtx.unlock();
+	
 }
 
 /*批量委托查询*/
@@ -649,6 +660,7 @@ int BatchEntrustQry()
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("BatchEntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	ShowAnsData();
@@ -665,6 +677,8 @@ float EntrustFare(char *tk, int amt, float tpx, char* bs)
 	char strtpx[10];
 	char ffare[10];
 	char bfare[10];
+	_itoa(amt, stramt, 10);
+	_itoa(tpx, strtpx, 10);
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", bs);//1买 2卖
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_prop", "0");//交易类别，必须输入确定的市场，不支持0或空格。
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_style", "2");
@@ -678,6 +692,7 @@ float EntrustFare(char *tk, int amt, float tpx, char* bs)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
 		printf("Request batch buy or sell failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		apimtx.unlock();
 		return iRet;
 	}
 	else

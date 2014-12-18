@@ -42,9 +42,10 @@ int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 		strcpy(strbs, "2");
 	////////获取买一价API
 	char str_price1[20];
-	PriceQry(tk, str_price1, bs);
-
+	//PriceQry(tk, str_price1, bs);
+	//printf("tk:%s\tstr_price1 %s\t\n", tk, str_price1);
 	float tpx = atof(str_price1);
+	tpx = 100;
 	float tradefare = EntrustFare(tk, brokeshr, tpx, "1");
 	cashmtx.lock();
 	GetCash();
@@ -64,9 +65,10 @@ int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 		{
 			///市价w委托API
 			char tmpbs[10];
-			if (MarketPriceEntrust(tk, shrtmp, _itoa(bs,tmpbs,10)))
+			if (MarketPriceEntrust(tk, shrtmp, _itoa(bs,tmpbs,10))==0)
 			{
 				//委托成功
+				cout << "Market Entrust Success" << endl;
 			}
 			else
 			{
@@ -76,9 +78,10 @@ int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 		else
 		{
 			/////普通委托API
-			if (NormalEntrust(tk, shrtmp, str_price1, strbs))
+			if (NormalEntrust(tk, shrtmp, str_price1, strbs)==0)
 			{
 				//委托成功
+				cout << "Entrust Success" << endl;
 			}
 			else
 			{
@@ -119,9 +122,10 @@ int GetCash()
 	char strcash[20];
 	int ret = 0;
 	cashmtx.lock();
-	if (AccQry(strcash))
+	if (1)//AccQry(strcash))
 	{
-		cash = atof(strcash);
+		//cash = atof(strcash);
+		cash = 100000;
 	}
 	else
 	{
@@ -148,6 +152,7 @@ int RunAlgorithm(Order *od, Company *cp)
 		int restime = (ehour - tminfo->tm_hour) * 60 - tminfo->tm_min + emin;
 		if (restime != 0 && shr != 0)//如果还有剩余时间和股票没交易
 		{
+			cout << "a" << endl;
 			int brokeshr = shr / 100 / restime;//尽量平摊在每分钟
 			if (brokeshr == 0)//不能平摊在剩下的每分钟里的情况，直接拆成100股
 			{
@@ -181,7 +186,7 @@ int RunAlgorithm(Order *od, Company *cp)
 				BuySellTk(tk, brokeshr,cp,2);
 				shr -= brokeshr;
 			}
-			//printf("tk:%s\trestshr:%d\tbrokeshr:%d\tcash:cash\n", tk, shr, brokeshr, cash);
+			printf("tk:%s\trestshr:%d\tbrokeshr:%d\tcash:cash\n", tk, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
 			int realamt = CheckDeal(tk);
 			if (realamt > 0)//如果部分成交的话
@@ -217,6 +222,7 @@ int Run()
 	try
 	{
 		Connect();
+		Login();
 		Company *cp = new CiticsCompany();
 		char *fdate = GetDate();
 		GetCash();
