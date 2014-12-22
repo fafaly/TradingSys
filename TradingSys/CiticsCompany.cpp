@@ -5,7 +5,7 @@
 CiticsCompany::CiticsCompany()
 {
 	memset(orderdir,0,sizeof(orderdir));
-	strcpy(orderdir,"20141215.test.csv");
+	strcpy(orderdir,"20141215.order.csv");
 }
 
 float CiticsCompany::GetTax(char*tk,int shr, float tpx, int bs)
