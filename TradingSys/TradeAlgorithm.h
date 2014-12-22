@@ -20,7 +20,7 @@ int ReadOrder();
 int Run();
 
 //子线程
-void SubThread(Order *od, Company *cp);
+void SubThread(Order *od);
 
 //获取现金.
 int GetCash();

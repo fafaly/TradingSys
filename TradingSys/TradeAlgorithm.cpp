@@ -32,7 +32,7 @@ char *GetDate()
 }
 
 //bs1买 2卖
-int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
+int BuySellTk(char *tk, int brokeshr,int bs,char *eno)
 {
 	int ret = 0;
 	char strbs[2];
@@ -41,16 +41,17 @@ int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 	else
 		strcpy(strbs, "2");
 	////////获取买一价API
-	char str_price1[20];
-	PriceQry(tk, str_price1, bs);
-
-	float tpx = atof(str_price1);
+	char *str_price1 = "20";//暂时所有都按20元交易
+	//PriceQry(tk, str_price1, bs); 行情功能在测试环境里不能用
+	float tpx = 20;////暂时所有都按20元交易
+	//printf("tk:%s brokeshr:%d tpx:%f\n", tk, brokeshr, tpx);
 	float tradefare = EntrustFare(tk, brokeshr, tpx, "1");
 	cashmtx.lock();
 	GetCash();
+	//printf("cash:%f\n", cash);
 	float tmp = cash;
 	//cash -= brokeshr*tpx - cp->GetTax(tk, brokeshr, tpx, bs);
-	cash -= tradefare;
+	cash -= tradefare - tpx * brokeshr;
 	if (cash < 0)
 	{
 		cash = tmp;
@@ -62,11 +63,13 @@ int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 		sprintf(shrtmp, "%d\0", brokeshr);
 		if (brokeshr >= 1500)
 		{
-			///市价w委托API
+			///市价委托API
 			char tmpbs[10];
-			if (MarketPriceEntrust(tk, shrtmp, _itoa(bs,tmpbs,10)))
+			//printf("tk:%s shrtmp:%s bs:%s\n", tk, shrtmp,"1");
+			if (MarketPriceEntrust(tk, shrtmp, _itoa(bs,tmpbs,10),eno)>=0)
 			{
 				//委托成功
+				printf("Market price entrust success!tk:%s \n",tk);
 			}
 			else
 			{
@@ -75,10 +78,12 @@ int BuySellTk(char *tk, int brokeshr, Company *cp,int bs)
 		}
 		else
 		{
+			//printf("tk:%s shrtmp:%s tpx:%s\n", tk, shrtmp, str_price1);
 			/////普通委托API
-			if (NormalEntrust(tk, shrtmp, str_price1, strbs))
+			if (NormalEntrust(tk, shrtmp, str_price1, strbs, eno)>=)
 			{
 				//委托成功
+				printf("Normal entrust success!tk:%s \n", tk);
 			}
 			else
 			{
@@ -95,19 +100,22 @@ int CheckDeal(char *tk)
 {
 	char amt[20];
 	char tpx[10];
-	char status[2];
-	if (EntrustQry(tk, amt, tpx, status) > 0)
+	char status[3];
+	if (EntrustQry(tk, amt, tpx, status) >= 0)
 	{
 		if (strcmp(status,"8")==0)
 		{
+			printf("%s已经成交\n",tk);
 			return 0;
 		}
 		else if (strcmp(status, "7") == 0)
 		{
+			printf("%s部分成交\n",tk);
 			return atoi(amt);
 		}
 		else
 		{
+			printf("%s未成交 状态号%s\n",tk,status);
 			return -1;
 		}
 	}
@@ -118,22 +126,21 @@ int GetCash()
 {
 	char strcash[20];
 	int ret = 0;
-	cashmtx.lock();
-	if (AccQry(strcash))
+	if (FundAry(strcash))
 	{
+		//cash = 1000000;
 		cash = atof(strcash);
 	}
 	else
 	{
 		ret = -1;
 	}
-	cashmtx.unlock();
 	return ret;
 }
 
 
-//bs: buy:1  sell:-1
-int RunAlgorithm(Order *od, Company *cp)
+ 
+int RunAlgorithm(Order *od)
 {
 	char *tk = od->tk;
 	int shr = od->shr;
@@ -149,6 +156,7 @@ int RunAlgorithm(Order *od, Company *cp)
 		if (restime != 0 && shr != 0)//如果还有剩余时间和股票没交易
 		{
 			int brokeshr = shr / 100 / restime;//尽量平摊在每分钟
+			char eno[20];//用于保存委托编号，在撤单时可以处理
 			if (brokeshr == 0)//不能平摊在剩下的每分钟里的情况，直接拆成100股
 			{
 				brokeshr = 100;
@@ -166,7 +174,7 @@ int RunAlgorithm(Order *od, Company *cp)
 
 			if (strcmp(od->bs, "B") == 0)
 			{
-				if (BuySellTk(tk, brokeshr, cp, 1) == 1)//没钱买
+				if (BuySellTk(tk, brokeshr, 1,eno) == 1)//没钱买
 				{
 					Sleep(INTERVAL_TIME);
 					continue;
@@ -178,10 +186,10 @@ int RunAlgorithm(Order *od, Company *cp)
 			}
 			else
 			{
-				BuySellTk(tk, brokeshr,cp,2);
+				BuySellTk(tk, brokeshr,2,eno);
 				shr -= brokeshr;
 			}
-			//printf("tk:%s\trestshr:%d\tbrokeshr:%d\tcash:cash\n", tk, shr, brokeshr, cash);
+			printf("resttime:%d\ttk:%s\trestshr:%d\tbrokeshr:%d\tcash:%f\n",restime, tk, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
 			int realamt = CheckDeal(tk);
 			if (realamt > 0)//如果部分成交的话
@@ -190,8 +198,9 @@ int RunAlgorithm(Order *od, Company *cp)
 			}
 			else if (realamt < 0)//完全没成交
 			{
-				if (CancelEntrust(tk) > 0)//撤单
+				if (CancelEntrust(eno) > 0)//撤单
 				{
+					printf("Cancel the entrust tk:%s\n",tk);
 					shr += brokeshr;//把去掉的加回来
 				}
 				else
@@ -199,8 +208,12 @@ int RunAlgorithm(Order *od, Company *cp)
 					//如果撤销失败怎么办？
 				}
 			}
+			else
+			{
+				//已经完全成交.
+			}
+			printf("resttime:%d\ttk:%s\trestshr:%d\tbrokeshr:%d\tcash:%f\n", restime, tk, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
-			printf("tk:%s\trestshr:%d\tbrokeshr:%d\tcash:cash\n", tk, shr, brokeshr, cash);
 		}
 		else
 		{
@@ -216,7 +229,18 @@ int Run()
 {
 	try
 	{
-		Connect();
+		HSHLPHANDLE HlpHandle=Connect();
+		Login();
+		//CheckDeal("600008");
+		//char tmpp[10],amt[10],tpx[10];
+		//FundAry(tmpp);
+		//PriceQry("600008",tmpp,1);
+		//EntrustQry("600008", amt, tpx, tmpp);
+		//cout << tmpp << endl;
+		//NormalEntrust("600009", "100", "1","1");
+		//CancelEntrustQry();
+		//CancelEntrust("1");
+		//exit(1);
 		Company *cp = new CiticsCompany();
 		char *fdate = GetDate();
 		GetCash();
@@ -231,7 +255,7 @@ int Run()
 			strcpy(od->bs, strtok(NULL, ","));
 			strcpy(od->stime, strtok(NULL, ","));
 			strcpy(od->etime, strtok(NULL, ","));
-			thread *td = new thread(SubThread, od,cp);
+			thread *td = new thread(SubThread, od);
 			threads.push_back(td);
 		}
 		fclose(fp);
@@ -248,7 +272,7 @@ int Run()
 
 //每五秒查询一下是否到了该发送该交易的时间了
 //校验的时间按分钟和小时算（比对两个时间）
-void SubThread(Order *od,Company *cp)
+void SubThread(Order *od)
 {
 	try
 	{
@@ -257,24 +281,13 @@ void SubThread(Order *od,Company *cp)
 		//cout << this_thread::get_id() << endl;
 		int shour = atoi(strtok(od->stime, ":"));
 		int smin = atoi(strtok(NULL, ":"));
-		//int ehour = atoi(strtok(etime, ":"));
-		//int emin = atoi(strtok(NULL, ":"));
-		//int direction = 0;
-		//if (strcmp(bs,"B")==0)
-		//{
-		//	direction = 1;
-		//}
-		//else
-		//{
-		//	direction = -1;
-		//}
 		do
 		{
 			time(&rawtime);
 			tminfo = localtime(&rawtime);
 			if (tminfo->tm_hour == shour && tminfo->tm_min == smin)
 			{
-				if (RunAlgorithm(od,cp) > 0)
+				if (RunAlgorithm(od) > 0)
 					break;
 			}
 			Sleep(2000);
