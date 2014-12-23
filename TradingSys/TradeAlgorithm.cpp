@@ -80,7 +80,7 @@ int BuySellTk(char *tk, int brokeshr,int bs,char *eno)
 		{
 			//printf("tk:%s shrtmp:%s tpx:%s\n", tk, shrtmp, str_price1);
 			/////普通委托API
-			if (NormalEntrust(tk, shrtmp, str_price1, strbs, eno)>=)
+			if (NormalEntrust(tk, shrtmp, str_price1, strbs, eno)>=0)
 			{
 				//委托成功
 				printf("Normal entrust success!tk:%s \n", tk);
@@ -198,7 +198,7 @@ int RunAlgorithm(Order *od)
 			}
 			else if (realamt < 0)//完全没成交
 			{
-				if (CancelEntrust(eno) > 0)//撤单
+				if (CancelEntrust(eno) >= 0)//撤单
 				{
 					printf("Cancel the entrust tk:%s\n",tk);
 					shr += brokeshr;//把去掉的加回来
@@ -285,7 +285,7 @@ void SubThread(Order *od)
 		{
 			time(&rawtime);
 			tminfo = localtime(&rawtime);
-			if (tminfo->tm_hour == shour && tminfo->tm_min == smin)
+			if (tminfo->tm_hour >= shour && tminfo->tm_min >= smin)
 			{
 				if (RunAlgorithm(od) > 0)
 					break;

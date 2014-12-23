@@ -21,8 +21,8 @@ void InitialAccount(char *fund, char *pwd, char *out_dir)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//InitialAccount("600511005", "606869", "");
-	InitialAccount("1000000033", "606869", "");
+	InitialAccount("600511005", "606869", "");
+	//InitialAccount("1000000033", "606869", "");
 	Run();
 	return 0;
 }
