@@ -80,7 +80,7 @@ int BuySellTk(char *tk, int brokeshr,int bs,char *eno)
 		{
 			//printf("tk:%s shrtmp:%s tpx:%s\n", tk, shrtmp, str_price1);
 			/////普通委托API
-			if (NormalEntrust(tk, shrtmp, str_price1, strbs, eno)>=)
+			if (NormalEntrust(tk, shrtmp, str_price1, strbs, eno)>=0)
 			{
 				//委托成功
 				printf("Normal entrust success!tk:%s \n", tk);
@@ -198,7 +198,7 @@ int RunAlgorithm(Order *od)
 			}
 			else if (realamt < 0)//完全没成交
 			{
-				if (CancelEntrust(eno) > 0)//撤单
+				if (CancelEntrust(eno) >= 0)//撤单
 				{
 					printf("Cancel the entrust tk:%s\n",tk);
 					shr += brokeshr;//把去掉的加回来
@@ -231,17 +231,27 @@ int Run()
 	{
 		HSHLPHANDLE HlpHandle=Connect();
 		Login();
-		//CheckDeal("600008");
-		//char tmpp[10],amt[10],tpx[10];
-		//FundAry(tmpp);
+		char tmpp[10],amt[10],tpx[10];
 		//PriceQry("600008",tmpp,1);
+		//FundAry(tmpp);
+		//StockQry("510300");
+		//EntrustBuyAmount("510300", "4", amt);
+		//MarketPriceEntrust("600008", "100", "1", tmpp);
+		//EntrustFare("510300", 1000, 4, "1");
+		//HistDeliverQry("20141201", "20141224");
+		//HistBussinessQry("20141201", "20141224");
+		//HistFundStockQry("20141201", "20141224");
+		//HistTradeTotQry("20141201", "20141224");
+		//StockFastQry();
 		//EntrustQry("600008", amt, tpx, tmpp);
+		Subscribe();
 		//cout << tmpp << endl;
-		//NormalEntrust("600009", "100", "1","1");
+		//NormalEntrust("510300", "100", "1", "1", tmpp);
 		//CancelEntrustQry();
 		//CancelEntrust("1");
-		//exit(1);
-		Company *cp = new CiticsCompany();
+		
+		exit(1);
+		CiticsCompany *cp = new CiticsCompany();
 		char *fdate = GetDate();
 		GetCash();
 		FILE *fp = F_OPEN(cp->orderdir, "r", 1, fdate);
@@ -285,7 +295,7 @@ void SubThread(Order *od)
 		{
 			time(&rawtime);
 			tminfo = localtime(&rawtime);
-			if (tminfo->tm_hour == shour && tminfo->tm_min == smin)
+			if (tminfo->tm_hour >= shour && tminfo->tm_min >= smin)
 			{
 				if (RunAlgorithm(od) > 0)
 					break;

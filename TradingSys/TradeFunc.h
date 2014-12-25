@@ -13,8 +13,7 @@
 #pragma comment(lib, "CITICs_HsT2Hlp.lib")
 #pragma comment(lib,"wsock32.lib")
 
-#define IN
-#define OUT
+
 
 void ShowAnsData();
 void ShowErrMsg(int iFunc);
@@ -54,6 +53,24 @@ int MarketPriceEntrust(char *s_code, char *ammount, char *bs, OUT char *eno);
 int FundAry(char *out_cash);
 //前台费用计算
 float EntrustFare(char *tk,int amt,float tpx,char* bs);
+//股票信息查询
+int StockQry(char *s_code);
+//最大买入量
+int EntrustBuyAmount(char *s_code, char *tpx,OUT char *amount);
+//历史交割信息查询
+int HistDeliverQry(char *sdate, char *edate);
+//历史成交查询.
+int HistBussinessQry(char *sdate, char *edate);
+//历史资金证券流水查询.
+int HistFundStockQry(char *sdate, char *edate);
+//历史证券成交统计查询
+int HistTradeTotQry(char *sdate, char *edate);
+//快速持仓查询.
+int StockFastQry();
+//订阅证券成交回报
+int Subscribe();
+//取消证券成交回报
+int SubCancel();
 //连接服务器
 HSHLPHANDLE Connect();
 
