@@ -75,11 +75,5 @@ int SubCancel();
 HSHLPHANDLE Connect();
 
 
-//const char fund_account[32] = "600511005";//测试资金账号
-//const char password[32] = "606869";//测试资金密码
-extern char fund_account[32];//资金账号
-extern char password[32];//资金密码
-
-extern char OUT_TP_DIR[100];
 
 
