@@ -223,7 +223,7 @@ int RunAlgorithm(Order *od)
 	delete od;
 	return 0;
 }
-
+ 
 //Æô¶¯Ïß³Ì
 int Run()
 {
@@ -231,22 +231,20 @@ int Run()
 	{
 		HSHLPHANDLE HlpHandle=Connect();
 		Login();
-		char tmpp[10],amt[10],tpx[10];
+		char tmpp[10],amt[10],tpx[10],eno[10],status[10];
 		//PriceQry("600008",tmpp,1);
 		//FundAry(tmpp);
 		//StockQry("510300");
-		//EntrustBuyAmount("510300", "4", amt);
-		//MarketPriceEntrust("600008", "100", "1", tmpp);
+		//EntrustBuyAmount("600008", "14", amt);
+		//MarketPriceEntrust("600008", "500", "1", tmpp); 
 		//EntrustFare("510300", 1000, 4, "1");
 		//HistDeliverQry("20141201", "20141224");
 		//HistBussinessQry("20141201", "20141224");
 		//HistFundStockQry("20141201", "20141224");
-		//HistTradeTotQry("20141201", "20141224");
 		//StockFastQry();
+		//NormalEntrust("600008", "100", "5", "1", tmpp);
 		//EntrustQry("600008", amt, tpx, tmpp);
-		Subscribe();
 		//cout << tmpp << endl;
-		//NormalEntrust("510300", "100", "1", "1", tmpp);
 		//CancelEntrustQry();
 		//CancelEntrust("1");
 		

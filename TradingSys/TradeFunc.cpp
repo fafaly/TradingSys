@@ -3,7 +3,7 @@
 #include <io.h>
 #include <mutex>
 
-const char op_entrust_way[4] = "5";//外部接入客户必须用3（远程委托），生产后需要让营业部对使用的资金账号开通3权限
+const char op_entrust_way[4] = "3";//外部接入客户必须用3（远程委托），生产后需要让营业部对使用的资金账号开通3权限
 const char ClientName[16] = "SHXT"; //客户简称，一般用拼音首字母,请务必修改！
 
 char client_id[32];
@@ -450,15 +450,15 @@ int MarketPriceEntrust(char *s_code, char *amount, char *bs,char *eno)
 	CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_amount", amount);
 	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", bs);//1买 2卖
-	CITICs_HsHlp_SetValue(HlpHandle, "entrust_prop", "0");//委托类型：买卖
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_prop", "U");//委托类型：买卖
 	CITICs_HsHlp_SetValue(HlpHandle, "batch_no", "0");//0表示单笔订单
-
+	CITICs_HsHlp_SetValue(HlpHandle, "exchange_type", "1");//上海
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333003, NULL);
 	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
-		printf("NormalEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		printf("MarketPriceEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
 		
 	}
 	else
@@ -612,7 +612,7 @@ int PriceQry(char *s_code, char *price1, int bs)
 		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
 
 	}
-	//ShowAnsData();
+	ShowAnsData();
 	apimtx.unlock();
 	return iRet;
 }
@@ -633,7 +633,7 @@ int FundAry(char *mycash)
 	else
 	{
 		CITICs_HsHlp_GetValue(HlpHandle, "enable_balance", mycash);
-		//ShowAnsData();
+		ShowAnsData();
 	}
 	apimtx.unlock();
 	return iRet;
@@ -836,7 +836,6 @@ int HistFundStockQry(char *sdate, char *edate)
 	ShowAnsData();
 	apimtx.unlock();
 	return iRet;
-
 }
 
 int HistTradeTotQry(char *sdate, char *edate)
@@ -847,7 +846,7 @@ int HistTradeTotQry(char *sdate, char *edate)
 	CITICs_HsHlp_SetValue(HlpHandle, "start_date", sdate);
 	CITICs_HsHlp_SetValue(HlpHandle, "end_date", sdate);
 	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 339307, NULL);
-	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
 	if (iRet)
 	{
 		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
@@ -967,4 +966,39 @@ void put_file_str(const char* fname, char* format, ...)
 		fflush(fo);
 		fclose(fo);
 	}
+}
+
+/*
+* 功能：期货委托
+* fdirection:1开仓 2平仓 3交割 4平今仓
+*/
+int HundsunEntrust(char *f_code, char *ammount, char *tpx, char *bs, char *fdirection, OUT char *eno, OUT char *status)
+{
+	char szMsg[512];
+	apimtx.lock();
+	SetNecessaryParam();
+	CITICs_HsHlp_SetValue(HlpHandle, "futu_exch_type", "F3");
+	CITICs_HsHlp_SetValue(HlpHandle, "contract_code", f_code);
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_bs", bs);//1买 2卖
+	CITICs_HsHlp_SetValue(HlpHandle, "futures_direction", fdirection);
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_amount", ammount);
+	CITICs_HsHlp_SetValue(HlpHandle, "futu_entrust_price", tpx);
+	CITICs_HsHlp_SetValue(HlpHandle, "futu_entrust_prop", "1");//1市价单
+	CITICs_HsHlp_SetValue(HlpHandle, "entrust_kind", "0");
+
+	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 338202, NULL);
+	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+	if (iRet)
+	{
+		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
+		printf("HundsunEntrust failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+	}
+	else
+	{
+		CITICs_HsHlp_GetValue(HlpHandle, "entrust_no", eno);
+		CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
+	}
+	ShowAnsData();
+	apimtx.unlock();
+	return iRet;
 }

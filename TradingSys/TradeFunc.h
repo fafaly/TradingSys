@@ -71,6 +71,11 @@ int StockFastQry();
 int Subscribe();
 //取消证券成交回报
 int SubCancel();
+/*
+* 功能：期货委托
+* fdirection:1开仓 2平仓 3交割 4平今仓
+*/
+int HundsunEntrust(char *f_code, char *ammount, char *tpx, char *bs, char *fdirection, OUT char *eno, OUT char *status);
 //连接服务器
 HSHLPHANDLE Connect();
 
