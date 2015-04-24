@@ -76,12 +76,12 @@ int Run(Company *cp,TradeAlgorithm *ta)
 		//FundAry(tmpp);
 		//StockQry("510300");
 		//EntrustBuyAmount("510300", "4", amt);
-		cp->MarketPriceEntrust("000011", "100", "1", tmpp);
+		//cp->MarketPriceEntrust("000011", "100", "1", tmpp);
 		//EntrustFare("510300", 1000, 4, "1");
 		//HistDeliverQry("20141201", "20141224");
 		//HistBussinessQry("20141201", "20141224");
 		//HistFundStockQry("20141201", "20141224");
-		//HistTradeTotQry("20141201", "20141224");
+		cp->HistTradeTotQry("20141201", "20141224");
 		//StockFastQry();
 		//EntrustQry("600008", amt, tpx, tmpp);
 		//Subscribe();

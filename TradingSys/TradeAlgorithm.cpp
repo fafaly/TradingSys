@@ -59,7 +59,7 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 			if (cp->MarketPriceEntrust(tk, shrtmp, _itoa(bs, tmpbs, 10), eno) >= 0)
 			{
 				//Î¯ÍÐ³É¹¦
-				printf("Market price entrust success!tk:%s \n",tk);
+				printf("Market price entrust success!tk:%s \n", tk); 
 			}
 			else
 			{
@@ -127,8 +127,6 @@ int TradeAlgorithm::GetCash()
 	}
 	return ret;
 }
-
-
  
 int TradeAlgorithm::RunAlgorithm(Order *od)
 {
