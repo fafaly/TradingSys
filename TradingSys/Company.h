@@ -59,7 +59,6 @@ public:
 	virtual int StockFastQry();
 	//连接服务器
 	virtual int Connect();
-
 	//析构函数.
 	~Company();
 };

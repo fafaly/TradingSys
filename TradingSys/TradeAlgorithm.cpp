@@ -32,7 +32,6 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 		strcpy(strbs, "2");
 	////////获取买一价API
 	char *str_price1 = "20";//暂时所有都按20元交易
-	//PriceQry(tk, str_price1, bs); 行情功能在测试环境里不能用
 	float tpx = 20;////暂时所有都按20元交易
 	//printf("tk:%s brokeshr:%d tpx:%f\n", tk, brokeshr, tpx);
 	float tradefare = cp->EntrustFare(tk, brokeshr, tpx, "1");
@@ -129,8 +128,8 @@ int TradeAlgorithm::GetCash()
 }
 
 
- 
-int TradeAlgorithm::RunAlgorithm(Order *od)
+
+int TradeAlgorithm::EasyAlgorithm(Order *od)
 {
 	char *tk = od->tk;
 	int shr = od->shr;
@@ -179,7 +178,7 @@ int TradeAlgorithm::RunAlgorithm(Order *od)
 				BuySellTk(tk, brokeshr,2,eno);
 				shr -= brokeshr;
 			}
-			printf("resttime:%d\ttk:%s\trestshr:%d\tbrokeshr:%d\tcash:%f\n",restime, tk, shr, brokeshr, cash);
+			printf("tk:%s\tdirection:%s\tresttime:%d\trestshr:%d\tbrokeshr:%d\tcash:%f\n", tk, od->bs,restime, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
 			int realamt = CheckDeal(tk);
 			if (realamt > 0)//如果部分成交的话
@@ -210,7 +209,23 @@ int TradeAlgorithm::RunAlgorithm(Order *od)
 			return 1;
 		}
 	}
+	printf("%s finish.\n",tk);
 	delete od;
 	return 0;
 }
 
+int NormalVWAP(Order *od, int days, char *ipxdir)
+{
+	int ret = 0;
+	//从今天开始向前轮询days天
+	time_t timev;
+	time(&timev);
+	struct tm * now = localtime(&timev);
+	for (int i = 0; i < days; i++)
+	{
+		timev = timev - (24 * 60 * 60);
+		now = localtime(&timev);
+	}
+	
+	return ret;
+}
