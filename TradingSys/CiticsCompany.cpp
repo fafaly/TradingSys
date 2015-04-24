@@ -34,7 +34,7 @@ int CiticsCompany::Connect()
 	}
 	if (!GetFirstMac(MAC))
 	{
-		printf("获取本机MAC失败，请手动填入本机MAC至对应字符串。\n");
+		//printf("获取本机MAC失败，请手动填入本机MAC至对应字符串。\n");
 	}
 	//op_station需要严格按照下列规则填写
 	strcat(op_station, "tyjr-");//默认前缀，请不要修改
@@ -337,7 +337,7 @@ int CiticsCompany::NormalEntrust(char *s_code, char *ammount, char *tpx, char *b
 	{
 		CITICs_HsHlp_GetValue(HlpHandle, "entrust_no", eno);
 	}
-	ShowAnsData();
+	//ShowAnsData();
 	apimtx.unlock();
 	return iRet;
 }
@@ -367,7 +367,7 @@ int CiticsCompany::MarketPriceEntrust(char *s_code, char *amount, char *bs, char
 	{
 		CITICs_HsHlp_GetValue(HlpHandle, "entrust_no", eno);
 	}
-	ShowAnsData();
+	//ShowAnsData();
 	apimtx.unlock();
 	return iRet;
 }

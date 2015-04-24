@@ -26,11 +26,21 @@ private:
 	//买或者卖
 	int BuySellTk(char *tk, int brokeshr, int bs, char *eno);
 	//检查交易是否完成
+	//status:8 已经成交 9 部分成交 其余都是未成交的各种状态
 	int CheckDeal(char *tk);
 
 public:
+	//构造函数，需要传入对应的公司接口的引用
 	TradeAlgorithm(Company *comp);
+	//算法析构函数
 	~TradeAlgorithm();
-	//运行算法
-	int RunAlgorithm(Order *od);
+	//初始的算法版本
+	//采取均分策略，在累计到一定股数时市价买入
+	int EasyAlgorithm(Order *od);
+	//标准VWAP算法
+	//基于日内加权平均算法
+	//od存储单相关内容
+	//days多少天的日内平均值
+	//ipxdir存放ipx的存放地址
+	int NormalVWAP(Order *od,int days,char *ipxdir);
 };
