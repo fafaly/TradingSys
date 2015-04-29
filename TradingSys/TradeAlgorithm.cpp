@@ -127,8 +127,6 @@ int TradeAlgorithm::GetCash()
 	return ret;
 }
 
-
-
 int TradeAlgorithm::EasyAlgorithm(Order *od)
 {
 	char *tk = od->tk;

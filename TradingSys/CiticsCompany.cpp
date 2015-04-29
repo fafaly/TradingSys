@@ -238,7 +238,6 @@ bool CiticsCompany::GetFirstMac(char * mac)
 /*持仓量查询或成交流水查询*/
 int CiticsCompany::GetShare()
 {
-
 	char szMsg[512];
 	apimtx.lock();
 	SetNecessaryParam();
