@@ -22,7 +22,8 @@ TradeAlgorithm::TradeAlgorithm(Company *comp)
 TradeAlgorithm::~TradeAlgorithm(){}
 
 //bs1买 2卖
-int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
+//type1普通委托，2市价委托
+int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno,int type)
 {
 	int ret = 0;
 	char strbs[2];
@@ -34,9 +35,17 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 	char *str_price1 = "20";//暂时所有都按20元交易
 	float tpx = 20;////暂时所有都按20元交易
 	//printf("tk:%s brokeshr:%d tpx:%f\n", tk, brokeshr, tpx);
-	float tradefare = cp->EntrustFare(tk, brokeshr, tpx, "1");
+	float tradefare = 0;
+	if (tradefare = cp->EntrustFare(tk, brokeshr, tpx, "1") < 0)
+	{
+		//税费计算失败怎么办？
+	}
 	cashmtx.lock();
-	GetCash();
+	if (GetCash() < 0)
+	{
+		printf("获取现有资金量错误\n");
+		exit(1);
+	}
 	//printf("cash:%f\n", cash);
 	float tmp = cash;
 	//cash -= brokeshr*tpx - cp->GetTax(tk, brokeshr, tpx, bs);
@@ -50,7 +59,7 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 	{
 		char shrtmp[20];
 		sprintf(shrtmp, "%d\0", brokeshr);
-		if (brokeshr >= 1500)
+		if (brokeshr >= m_limit_shr)//超过累计数量进行市价委托
 		{
 			///市价委托API
 			char tmpbs[10];
@@ -58,10 +67,12 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 			if (cp->MarketPriceEntrust(tk, shrtmp, _itoa(bs, tmpbs, 10), eno) >= 0)
 			{
 				//委托成功
-				printf("Market price entrust success!tk:%s \n",tk);
+				printf("市价委托已成功!tk:%s \n",tk);
 			}
 			else
 			{
+
+				printf("市价委托发送失败!tk:%s \n", tk);
 				cash = tmp;
 			}
 		}
@@ -72,11 +83,12 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 			if (cp->NormalEntrust(tk, shrtmp, str_price1, strbs, eno) >= 0)
 			{
 				//委托成功
-				printf("Normal entrust success!tk:%s \n", tk);
+				printf("普通委托已发送!tk:%s \n", tk);
 			}
 			else
 			{
 				cash = tmp;
+				printf("普通委托发送失败!tk:%s \n", tk);
 			}
 		}
 	}
@@ -84,8 +96,8 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno)
 	return ret;
 }
 
-//检查成交情况.
-int TradeAlgorithm::CheckDeal(char *tk)
+////检查委托情况.
+int TradeAlgorithm::CheckEntrust(char *tk)
 {
 	char amt[20];
 	char tpx[10];
@@ -107,6 +119,11 @@ int TradeAlgorithm::CheckDeal(char *tk)
 			printf("%s未成交 状态号%s\n",tk,status);
 			return -1;
 		}
+	}
+	else
+	{
+		printf("查询股票成交状态失败\n");
+		return -1;
 	}
 }
 
@@ -130,26 +147,35 @@ int TradeAlgorithm::GetCash()
 int TradeAlgorithm::EasyAlgorithm(Order *od)
 {
 	char *tk = od->tk;
+	int acthold = m_holdmap[tk];
 	int shr = od->shr;
 	int ehour = atoi(strtok(od->etime, ":"));
 	int emin = atoi(strtok(NULL, ":"));
+	char realstatus[16] = { 0 };
 	time_t rawtime;
 	struct tm *tminfo;
+	//检查持仓量
+	if (strcmp(od->bs,"S")==0 && acthold < shr)
+	{
+		printf("The actholding of %s in not enough\n", tk);
+		return -1;
+	}
 	while (1)
 	{
+		//拆单.
 		time(&rawtime);
 		tminfo = localtime(&rawtime);
 		int restime = (ehour - tminfo->tm_hour) * 60 - tminfo->tm_min + emin;
 		if (restime != 0 && shr != 0)//如果还有剩余时间和股票没交易
 		{
-			int brokeshr = shr / 100 / restime;//尽量平摊在每分钟
+			int brokeshr = shr / 100 / restime;//每次拆单的股票数量，尽量平摊在每分钟
 			char eno[20];//用于保存委托编号，在撤单时可以处理
 			if (brokeshr == 0)//不能平摊在剩下的每分钟里的情况，直接拆成100股
 			{
 				brokeshr = 100;
 				//brokeshr = shr / 100 % restime;
 			}
-			else if (shr % 100 != 0)//不足100股
+			else if (shr < 100 )//不足100股
 			{
 				brokeshr = shr;
 			}
@@ -178,12 +204,9 @@ int TradeAlgorithm::EasyAlgorithm(Order *od)
 			}
 			printf("tk:%s\tdirection:%s\tresttime:%d\trestshr:%d\tbrokeshr:%d\tcash:%f\n", tk, od->bs,restime, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
-			int realamt = CheckDeal(tk);
-			if (realamt > 0)//如果部分成交的话
-			{
-				shr += brokeshr - realamt;
-			}
-			else if (realamt < 0)//完全没成交
+			cp->GetTrade(tk, realstatus);//查询交易状态.
+			
+			if (strcmp(realstatus,"0")!=0)//废单或者确认
 			{
 				if (cp->CancelEntrust(eno) >= 0)//撤单
 				{
@@ -192,22 +215,25 @@ int TradeAlgorithm::EasyAlgorithm(Order *od)
 				}
 				else
 				{
-					//如果撤销失败怎么办？
+					//如果撤单失败
+
 				}
 			}
 			else
 			{
 				//已经完全成交.
+				printf("%s tk: complete %d ",tk,brokeshr);
 			}
 			printf("resttime:%d\ttk:%s\trestshr:%d\tbrokeshr:%d\tcash:%f\n", restime, tk, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
 		}
 		else
 		{
-			return 1;
+			
+			break;
 		}
 	}
-	printf("%s finish.\n",tk);
+	printf("%s 交易结束，共交易%d,未交易%d\n", tk, od->shr - shr, shr);
 	delete od;
 	return 0;
 }

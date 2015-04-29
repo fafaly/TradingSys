@@ -105,6 +105,7 @@ int CiticsCompany::Login()
 	CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
 	ShowAnsData();
 	apimtx.unlock();
+	printf("----->登录成功\n");
 }
 
 void CiticsCompany::ShowErrMsg(int iFunc)
@@ -236,33 +237,46 @@ bool CiticsCompany::GetFirstMac(char * mac)
 }
 
 /*持仓量查询或成交流水查询*/
-int CiticsCompany::GetShare()
+int CiticsCompany::GetShare(map<string,int> &holdmap)
 {
 	char szMsg[512];
+	int totalRowNum = 0;
+	char szPosition_str[32];
+	memset(szPosition_str, 0x00, sizeof(szPosition_str));
 	apimtx.lock();
-	SetNecessaryParam();
-	CITICs_HsHlp_SetValue(HlpHandle, "query_mode", "1");
-	CITICs_HsHlp_SetValue(HlpHandle, "request_num", "1000");
-	CITICs_HsHlp_SetValue(HlpHandle, "query_type", "1");
-	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333104, NULL);
-	int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
-	if (iRet)
+	int iRow = 500;
+	while (iRow == 500)
 	{
-		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
-		printf("request shares failed, error cdoe=(%d) %s...\n", iRet, szMsg);
-		return iRet;
+		SetNecessaryParam();
+		CITICs_HsHlp_SetValue(HlpHandle, "query_mode", "1");
+		//CITICs_HsHlp_SetValue(HlpHandle, "request_num", "1000");
+		CITICs_HsHlp_SetValue(HlpHandle, "query_type", "1");
+		CITICs_HsHlp_SetValue(HlpHandle, "position_str", szPosition_str);
+		int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333104, NULL);
+		iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+		if (iRet)
+		{
+			CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
+			printf("request shares failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+			return iRet;
+		}
+		char szCode[16], szName[32], szValue[32], szAmmount[16];
+		for (int i = 0; i < iRow; i++)
+		{
+			CITICs_HsHlp_GetNextRow(HlpHandle);
+			CITICs_HsHlp_GetValue(HlpHandle, "stock_code", szCode);
+			CITICs_HsHlp_GetValue(HlpHandle, "current_amount", szAmmount);
+			holdmap[szCode] = atoi(szAmmount);
+		}
+		CITICs_HsHlp_GetValue(HlpHandle, "position_str", szPosition_str);
+		totalRowNum += iRow;
+		//printf("\nposition_str[%03d]:%s\n", totalRowNum, szPosition_str);
 	}
-	char szCode[16], szName[32], szValue[32], szAmmount[16];
-	for (int i = 0; i < iRow; i++)
-	{
-		CITICs_HsHlp_GetNextRow(HlpHandle);
-		CITICs_HsHlp_GetValue(HlpHandle, "stock_code", szCode);
-		CITICs_HsHlp_GetValue(HlpHandle, "current_amount", szAmmount);
-	}
+	printf("----->Hold stocks size:%d", holdmap.size());
 	apimtx.unlock();
 }
 
-int CiticsCompany::GetTrade()
+int CiticsCompany::GetTrade(char *tk,char *realstatus)
 {
 	char szMsg[512];
 	char *cpage = "2";
@@ -279,6 +293,10 @@ int CiticsCompany::GetTrade()
 		CITICs_HsHlp_SetValue(HlpHandle, "query_type", "1");
 		CITICs_HsHlp_SetValue(HlpHandle, "position_str", szPosition_str);
 		//CITICs_HsHlp_SetValue(HlpHandle, "position_str", cpage);
+		if (tk != NULL)
+		{
+			CITICs_HsHlp_SetValue(HlpHandle, "real_status", realstatus);
+		}
 		int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333102, NULL);
 		if (iRet)
 		{

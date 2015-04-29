@@ -59,9 +59,9 @@ public:
 	void SetNecessaryParam();
 	void put_file_str(const char* fname, char* format, ...);
 	//获取持仓
-	int GetShare();
+	int GetShare(map<string, int>&);
 	//获取当日交易明细
-	int GetTrade();
+	int GetTrade(char *tk,char *realstatus);
 	//普通委托
 	//bs:1买 2卖 eno:委托编号
 	int NormalEntrust(char *s_code, char *ammount, char *tpx, char *bs, OUT char *eno);

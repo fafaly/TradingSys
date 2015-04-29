@@ -1,4 +1,6 @@
 #pragma once
+#include<map>
+using namespace std;
 class Company
 {
 public:
@@ -14,9 +16,9 @@ public:
 	//用户登录
 	virtual int Login();
 	//获取持仓
-	virtual int GetShare();
+	virtual int GetShare(map<string, int>&);
 	//获取当日交易明细
-	virtual int GetTrade();
+	virtual int GetTrade(char *tk, char *realstatus);
 	//普通委托
 	//输入：bs:1买 2卖 
 	//输出：eno 委托编号

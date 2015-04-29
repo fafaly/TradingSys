@@ -15,10 +15,14 @@
 using namespace std;
 using namespace GlobalFunc;
 
+#define HOLD_BOD_DIR "D:\\data\WindDB\\production4\\portfolio\\actHolding\\"
+
 //读取配置文件，例如产品几的文件
 int ReadConfig();
 //读取订单的信息
 int ReadOrder();
+//读取holding文件
+int ReadHoldCSV(string fdate, TradeAlgorithm *ta);
 //子线程
 static void SubThread(Order *od, TradeAlgorithm *ta);
 
@@ -66,8 +70,7 @@ int Run(Company *cp,TradeAlgorithm *ta)
 {
 	try
 	{
-		cp->Connect();
-		cp->Login();
+
 		char tmpp[10], amt[10], tpx[10];
 		//PriceQry("600008",tmpp,1);
 		//cp->FundAry(tmpp);
@@ -115,13 +118,35 @@ int Run(Company *cp,TradeAlgorithm *ta)
 	return 0;
 }
 
+int ReadHoldCSV(string fdate, TradeAlgorithm *ta)
+{
+	int ret = 0;
+	string fname = HOLD_BOD_DIR + fdate + ".actHoldingBOD.csv";
+	FILE *fp = fopen(fname.c_str(), "r");
+	if (fp != NULL)
+	{
+		//get hold content table
+	}
+	else
+	{
+		ret = -1;
+	}
+	return ret;
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//InitialAccount("600511005", "606869", "");
 	//InitialAccount("1000000033", "606869", "");
+	string fdate = GetDate();
+	fdate = "20141216";
 	Company *cp = new CiticsCompany("600511005", "606869", "20141216.order.csv");
 	TradeAlgorithm *ta = new TradeAlgorithm(cp);
+	cp->Connect();
+	cp->Login();
+	cp->GetShare(ta->m_holdmap);
+	//ReadHold(fdate, ta);
 	Run(cp,ta);
 	return 0;
 }

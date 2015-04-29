@@ -20,7 +20,7 @@ Company::~Company()
 
 int Company::Login(){ return -1; }
 //获取持仓
-int Company::GetShare(){ return -1; }
+int Company::GetShare(map<string,int>&){ return -1; }
 //获取当日交易明细
 int Company::GetTrade(){ return -1; }
 //普通委托
