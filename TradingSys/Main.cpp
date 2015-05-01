@@ -54,8 +54,8 @@ void SubThread(Order *od, TradeAlgorithm *ta)
 			tminfo = localtime(&rawtime);
 			if (tminfo->tm_hour >= shour && tminfo->tm_min >= smin)
 			{
-				if (ta->EasyAlgorithm(od) > 0)
-					break;
+				ta->EasyAlgorithm(od);
+				break;
 			}
 			Sleep(2000);
 		} while (1);

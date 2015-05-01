@@ -22,7 +22,7 @@ int Company::Login(){ return -1; }
 //获取持仓
 int Company::GetShare(map<string,int>&){ return -1; }
 //获取当日交易明细
-int Company::GetTrade(){ return -1; }
+int Company::GetTrade(char *tk, char *realstatus){ return -1; }
 //普通委托
 //bs:1买 2卖 eno:委托编号
 int Company::NormalEntrust(char *s_code, char *ammount, char *tpx, char *bs, char *eno){ return -1; }

@@ -295,7 +295,7 @@ int CiticsCompany::GetTrade(char *tk,char *realstatus)
 		//CITICs_HsHlp_SetValue(HlpHandle, "position_str", cpage);
 		if (tk != NULL)
 		{
-			CITICs_HsHlp_SetValue(HlpHandle, "real_status", realstatus);
+			CITICs_HsHlp_SetValue(HlpHandle, "stock_code", tk);
 		}
 		int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333102, NULL);
 		if (iRet)
@@ -324,8 +324,12 @@ int CiticsCompany::GetTrade(char *tk,char *realstatus)
 			}
 		}
 		CITICs_HsHlp_GetValue(HlpHandle, "position_str", szPosition_str);
+		if (tk != NULL)
+		{
+			CITICs_HsHlp_GetValue(HlpHandle, "real_status", realstatus);
+		}
 		totalRowNum += iRow;
-		printf("\nposition_str[%03d]:%s\n", totalRowNum, szPosition_str);
+		//printf("\nposition_str[%03d]:%s\n", totalRowNum, szPosition_str);
 	}
 	apimtx.unlock();
 }
@@ -552,6 +556,7 @@ int CiticsCompany::FundAry(char *mycash)
 	else
 	{
 		CITICs_HsHlp_GetValue(HlpHandle, "enable_balance", mycash);
+		iRet = 1;
 		//ShowAnsData();
 	}
 	apimtx.unlock();
@@ -613,7 +618,7 @@ float CiticsCompany::EntrustFare(char *tk, int amt, float tpx, char* bs)
 		CITICs_HsHlp_GetValue(HlpHandle, "ffare_balance", ffare);
 		CITICs_HsHlp_GetValue(HlpHandle, "bfare_balance", bfare);
 	}
-	ShowAnsData();
+	//ShowAnsData();
 	apimtx.unlock();
 	return atof(ffare) + atof(bfare);
 }

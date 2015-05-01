@@ -23,12 +23,12 @@ TradeAlgorithm::~TradeAlgorithm(){}
 
 //bs1买 2卖
 //type1普通委托，2市价委托
-int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno,int type)
+int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno, int type)
 {
 	int ret = 0;
 	char strbs[2];
 	if (bs == 1)
-		strcpy(strbs,"1");
+		strcpy(strbs, "1");
 	else
 		strcpy(strbs, "2");
 	////////获取买一价API
@@ -38,7 +38,7 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno,int type
 	float tradefare = 0;
 	if (tradefare = cp->EntrustFare(tk, brokeshr, tpx, "1") < 0)
 	{
-		//税费计算失败怎么办？
+		//税费计算失败怎么办？--》 按自己的算法去算（两者应该进行一个比较）
 	}
 	cashmtx.lock();
 	if (GetCash() < 0)
@@ -59,7 +59,7 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno,int type
 	{
 		char shrtmp[20];
 		sprintf(shrtmp, "%d\0", brokeshr);
-		if (brokeshr >= m_limit_shr)//超过累计数量进行市价委托
+		if (type == 2)//超过累计数量进行市价委托
 		{
 			///市价委托API
 			char tmpbs[10];
@@ -67,13 +67,14 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno,int type
 			if (cp->MarketPriceEntrust(tk, shrtmp, _itoa(bs, tmpbs, 10), eno) >= 0)
 			{
 				//委托成功
-				printf("市价委托已成功!tk:%s \n",tk);
+				printf("tk:%s市价委托已成功! \n", tk);
 			}
 			else
 			{
 
-				printf("市价委托发送失败!tk:%s \n", tk);
+				printf("tk:%s市价委托发送失败! \n", tk);
 				cash = tmp;
+				ret = 2;//委托失败
 			}
 		}
 		else
@@ -83,12 +84,13 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno,int type
 			if (cp->NormalEntrust(tk, shrtmp, str_price1, strbs, eno) >= 0)
 			{
 				//委托成功
-				printf("普通委托已发送!tk:%s \n", tk);
+				printf("tk:%s普通委托已成功! \n", tk);
 			}
 			else
 			{
 				cash = tmp;
-				printf("普通委托发送失败!tk:%s \n", tk);
+				printf("tk:%s普通委托发送失败! \n", tk);
+				ret = 2;//委托失败
 			}
 		}
 	}
@@ -104,19 +106,19 @@ int TradeAlgorithm::CheckEntrust(char *tk)
 	char status[3];
 	if (cp->EntrustQry(tk, amt, tpx, status) >= 0)
 	{
-		if (strcmp(status,"8")==0)
+		if (strcmp(status, "8") == 0)
 		{
-			printf("%s已经成交\n",tk);
+			printf("%s已经成交\n", tk);
 			return 0;
 		}
 		else if (strcmp(status, "7") == 0)
 		{
-			printf("%s部分成交\n",tk);
+			printf("%s部分成交\n", tk);
 			return atoi(amt);
 		}
 		else
 		{
-			printf("%s未成交 状态号%s\n",tk,status);
+			printf("%s未成交 状态号%s\n", tk, status);
 			return -1;
 		}
 	}
@@ -153,11 +155,14 @@ int TradeAlgorithm::EasyAlgorithm(Order *od)
 	int emin = atoi(strtok(NULL, ":"));
 	char realstatus[16] = { 0 };
 	time_t rawtime;
+	int direction = 0;//买卖方向
 	struct tm *tminfo;
+	int failtimes = 0;//委托失败的次数
+	int entrusttype = 0;//委托类型，1为普通 ，2为市价
 	//检查持仓量
-	if (strcmp(od->bs,"S")==0 && acthold < shr)
+	if (strcmp(od->bs, "S") == 0 && acthold < shr)
 	{
-		printf("The actholding of %s in not enough\n", tk);
+		printf("tk: %s 持仓量不足.结束此交易\n", tk);
 		return -1;
 	}
 	while (1)
@@ -175,7 +180,7 @@ int TradeAlgorithm::EasyAlgorithm(Order *od)
 				brokeshr = 100;
 				//brokeshr = shr / 100 % restime;
 			}
-			else if (shr < 100 )//不足100股
+			else if (shr < 100)//不足100股
 			{
 				brokeshr = shr;
 			}
@@ -184,57 +189,77 @@ int TradeAlgorithm::EasyAlgorithm(Order *od)
 				//足够数量去划分
 				brokeshr *= 100;
 			}
-
-			if (strcmp(od->bs, "B") == 0)
+			//决定委托方式
+			if (failtimes >= 3)
 			{
-				if (BuySellTk(tk, brokeshr, 1,eno) == 1)//没钱买
-				{
-					Sleep(INTERVAL_TIME);
-					continue;
-				}
-				else
-				{
-					shr -= brokeshr;
-				}
+				entrusttype = 2;
+				failtimes = 0;
 			}
 			else
 			{
-				BuySellTk(tk, brokeshr,2,eno);
-				shr -= brokeshr;
+				entrusttype = 1;
 			}
-			printf("tk:%s\tdirection:%s\tresttime:%d\trestshr:%d\tbrokeshr:%d\tcash:%f\n", tk, od->bs,restime, shr, brokeshr, cash);
+			//决定买卖方向
+			if (strcmp(od->bs, "B") == 0)
+			{
+				direction = 1;
+			}
+			else
+			{
+				direction = 2;
+			}
+			//买卖股票的
+			int ret = BuySellTk(tk, brokeshr, direction, eno, entrusttype);
+			if (ret == 1)//没钱买
+			{
+				printf("金额不足：%f",cash);
+				Sleep(INTERVAL_TIME);
+				continue;
+			}
+			else if (ret == 2)
+			{
+				//委托失败
+				//printf("tk：%s 委托失败\n", tk);
+				failtimes++;
+			}
+			else
+			{
+				//委托成功
+			}
+
+			//	printf("tk:%s\t买卖方向:%s\t剩余时间:%d\t剩余交易量:%d\t拆单量:%d\t持有金额:%f\n", tk, od->bs,restime, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
 			cp->GetTrade(tk, realstatus);//查询交易状态.
-			
-			if (strcmp(realstatus,"0")!=0)//废单或者确认
+
+			if (strcmp(realstatus, "0") != 0)//废单或者确认状态
 			{
+				printf("%s tk: 交易未成功  ", tk);
 				if (cp->CancelEntrust(eno) >= 0)//撤单
 				{
-					printf("Cancel the entrust tk:%s\n",tk);
-					shr += brokeshr;//把去掉的加回来
+					printf("tk:%s 撤单成功 \n", tk);
 				}
 				else
 				{
 					//如果撤单失败
-
+					printf("tk:%s 撤单失败\n", tk);
 				}
 			}
 			else
 			{
 				//已经完全成交.
-				printf("%s tk: complete %d ",tk,brokeshr);
+				printf(" tk:%s 交易成功 %d ", tk, brokeshr);
+				shr -= brokeshr;
 			}
-			printf("resttime:%d\ttk:%s\trestshr:%d\tbrokeshr:%d\tcash:%f\n", restime, tk, shr, brokeshr, cash);
+			printf("tk:%s\t剩余时间:%d\t剩余交易量:%d\t拆单量:%d\t持有金额:%f\n", tk, restime, shr, brokeshr, cash);
 			Sleep(INTERVAL_TIME);
 		}
 		else
 		{
-			
+			//股票数为0 或者时间为0
 			break;
 		}
 	}
 	printf("%s 交易结束，共交易%d,未交易%d\n", tk, od->shr - shr, shr);
-	delete od;
 	return 0;
 }
 
@@ -250,6 +275,6 @@ int NormalVWAP(Order *od, int days, char *ipxdir)
 		timev = timev - (24 * 60 * 60);
 		now = localtime(&timev);
 	}
-	
+
 	return ret;
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "Company.h"
 #include <map>
+using namespace std;
 
 struct Order
 {
