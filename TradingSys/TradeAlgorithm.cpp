@@ -94,7 +94,7 @@ int TradeAlgorithm::BuySellTk(char *tk, int brokeshr, int bs, char *eno, int typ
 	////////获取买一价API
 	//char *str_price1 = "20";//暂时所有都按20元交易
 	//float tpx = 20;////暂时所有都按20元交易
-	float tpx=float(lv2(tk, bs, 1))/10000;//获取实时行情的level2的最前数据
+	float tpx = LoadGetLevel2PxDll(tk,bs,0)/ 10000;//获取实时行情的level2的最前数据
 	char  str_price1[20] = {0};
 	sprintf(str_price1,"%f",tpx);
 	float tradefare = 0;
@@ -181,7 +181,7 @@ int TradeAlgorithm::CheckEntrust(char *tk,char *eno)
 		if (strcmp(status, "8") == 0)
 		{
 			printf("%s已经成交\n", tk);
-			return 0;
+			return  atoi(amt);
 		}
 		else if (strcmp(status, "7") == 0)
 		{

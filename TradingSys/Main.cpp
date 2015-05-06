@@ -25,6 +25,8 @@ int ReadOrder();
 int ReadHoldCSV(string fdate, TradeAlgorithm *ta);
 //子线程
 static void SubThread(Order *od, TradeAlgorithm *ta);
+//全局dll句柄.
+HINSTANCE hdll;
 
 char * GetDate()
 {
@@ -133,7 +135,6 @@ int ReadHoldCSV(string fdate, TradeAlgorithm *ta)
 	return ret;
 }
 
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//InitialAccount("600511005", "606869", "");
@@ -145,9 +146,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	cp->Connect();
 	cp->Login();
 	cp->GetShare(ta->m_holdmap);
+	LoadDll("");
+	thread *td = new thread(LoadSubscribeData);
+	Sleep(15 * 1000);//等待行情启动
 	//ReadHold(fdate, ta);
-	LoadGetLevel2PxDll();
 	Run(cp,ta);
 	return 0;
 }
-

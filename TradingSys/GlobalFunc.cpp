@@ -8,6 +8,9 @@
 
 namespace GlobalFunc
 {
+
+	HINSTANCE hdll;
+
 	FILE *F_OPEN(char *fname, char *mode, int log_no, char *fdate)
 	{
 		FILE *fp = fopen(fname, mode);
@@ -25,18 +28,42 @@ namespace GlobalFunc
 			return fp;
 		}
 	}
-	
-	float  LoadGetLevel2PxDll(char *tk,int direction,int index)
+
+	void LoadDll(char *dllname)
 	{
-		HINSTANCE hdll;
-		typedef float(*GetLevel2Px)(char * , int , int );
-		void LoadGetLevel2PxDll();
-		GetLevel2Px lv2;
 		hdll = LoadLibrary(_T("kmdsHQdll.dll"));
 		if (hdll == NULL)
 		{
 			FreeLibrary(hdll);
 		}
+		
+		//typedef void(*SubscribeData)();
+		//SubscribeData sd;
+		//sd = (SubscribeData)GetProcAddress(hdll, "SubscribeData");
+		//if (sd == NULL)
+		//{
+		//	FreeLibrary(hdll);
+		//}
+		//sd();
+	}
+
+
+	void LoadSubscribeData()
+	{
+		typedef void(*SubscribeData)();
+		SubscribeData sd;
+		sd = (SubscribeData)GetProcAddress(hdll, "SubscribeData");
+		if (sd == NULL)
+		{
+			FreeLibrary(hdll);
+		}
+		sd();
+	}
+	
+	float  LoadGetLevel2PxDll(char *tk,int direction,int index)
+	{
+		typedef float(*GetLevel2Px)(char * , int , int );
+		GetLevel2Px lv2;
 		lv2 = (GetLevel2Px)GetProcAddress(hdll,"GetLevel2Px" );
 		if (lv2 == NULL)
 		{
@@ -49,6 +76,4 @@ namespace GlobalFunc
 	{
 		FreeLibrary(hdll);
 	}
-
-
 }
