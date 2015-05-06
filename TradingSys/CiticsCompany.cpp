@@ -484,25 +484,40 @@ int CiticsCompany::CancelEntrustQry()
 }
 
 /*Î¯ÍÐ²éÑ¯*/
-int CiticsCompany::EntrustQry(char *s_code, char *amt, char *tpx, char *status)
+int CiticsCompany::EntrustQry(char *s_code, char *amt, char *tpx,char* eno, char *status)
 {
 	char szMsg[512];
+	char szPosition_str[32];
 	apimtx.lock();
 	SetNecessaryParam();
-	CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
-	int iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333101, NULL);
-	//int iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
-	if (iRet)
+	int iRow = 500;
+	int iRet = 0;
+	while (iRow == 500)
 	{
-		CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
-		printf("EntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
-	}
-	else
-	{
-		CITICs_HsHlp_GetValue(HlpHandle, "business_amount", amt);
-		CITICs_HsHlp_GetValue(HlpHandle, "business_price", tpx);
-		CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
-		//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
+
+		CITICs_HsHlp_SetValue(HlpHandle, "stock_code", s_code);
+		CITICs_HsHlp_SetValue(HlpHandle, "locate_entrust_no", eno);
+		CITICs_HsHlp_SetValue(HlpHandle, "position_str", szPosition_str);
+		CITICs_HsHlp_SetValue(HlpHandle, "request_num", "500");
+		iRet = CITICs_HsHlp_BizCallAndCommit(HlpHandle, 333101, NULL);
+		iRow = CITICs_HsHlp_GetRowCount(HlpHandle);
+		if (iRet)
+		{
+			CITICs_HsHlp_GetErrorMsg(HlpHandle, &iRet, szMsg);
+			printf("EntrustQry failed, error cdoe=(%d) %s...\n", iRet, szMsg);
+		}
+		else
+		{
+			for (int i = 0; i < iRow; i++)
+			{
+
+				CITICs_HsHlp_GetValue(HlpHandle, "business_amount", amt);
+				CITICs_HsHlp_GetValue(HlpHandle, "business_price", tpx);
+				CITICs_HsHlp_GetValue(HlpHandle, "entrust_status", status);
+			}
+			//CITICs_HsHlp_GetValue(HlpHandle, "sysnode_id", sysnode_id);
+			CITICs_HsHlp_GetValue(HlpHandle, "position_str", szPosition_str);
+		}
 
 	}
 	//ShowAnsData();

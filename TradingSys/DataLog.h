@@ -5,6 +5,9 @@ private:
 	char COMP_PRO_DIR[100] ;
 	char fdate[20];
 	char signal[20];
+	char m_trade_detail_dir[150];//交易细节文件目录
+	char m_acttrade_dir[150];//成交汇总文件目录
+	char m_actholding_dir[150];//持有文件目录
 public:
 	/*
 	* comp_no:公司代号

@@ -70,7 +70,6 @@ int Run(Company *cp,TradeAlgorithm *ta)
 {
 	try
 	{
-
 		char tmpp[10], amt[10], tpx[10];
 		//PriceQry("600008",tmpp,1);
 		//cp->FundAry(tmpp);
@@ -147,6 +146,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	cp->Login();
 	cp->GetShare(ta->m_holdmap);
 	//ReadHold(fdate, ta);
+	LoadGetLevel2PxDll();
 	Run(cp,ta);
 	return 0;
 }

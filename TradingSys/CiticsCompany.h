@@ -78,7 +78,7 @@ public:
 	int PriceQry(char *s_code, char *price1, int bs);
 	//委托查询
 	//status:0未报; 1待报; 2已报 ;6已撤; 7部分成交; 8全部成交;
-	int EntrustQry(char *s_code, char *amt, char *tpx, char *status);
+	int EntrustQry(IN char *s_code,OUT char *amt,OUT char *tpx,OUT char* eno,OUT char *status);
 	//市价交易
 	//bs:1买 2卖 eno:委托编号
 	int MarketPriceEntrust(char *s_code, char *ammount, char *bs, OUT char *eno);

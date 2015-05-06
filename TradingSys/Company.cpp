@@ -39,7 +39,7 @@ int Company::BatchEntrustQry(){ return -1; }
 int Company::PriceQry(char *s_code, char *price1, int bs){ return -1; }
 //委托查询
 //status:0未报; 1待报; 2已报 ;6已撤; 7部分成交; 8全部成交;
-int Company::EntrustQry(char *s_code, char *amt, char *tpx, char *status){ return -1; }
+int Company::EntrustQry(char *s_code, char *amt, char *tpx,char *no, char *status){ return -1; }
 //市价交易
 //bs:1买 2卖 eno:委托编号
 int Company::MarketPriceEntrust(char *s_code, char *amount, char *bs, char *eno){ return -1; }
